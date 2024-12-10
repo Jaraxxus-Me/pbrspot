@@ -5,16 +5,17 @@
 import os
 import numpy as np
 import pbrspot
+from bosdyn.client.math_helpers import SE3Pose, Quat
 
 if __name__ == '__main__':
     # Launch pybullet
     pbrspot.utils.connect(use_gui=True)
     pbrspot.utils.disable_real_time()
     # update these information from ROS2 service localizer
-    body_frame_x = 2.182
-    body_frame_y = 0.012
-    body_frame_z = -0.188
-    body_rot = [-0.0089, -0.0007, -0.9957, -0.0927] # qx qy qz qw
+    body_frame_x = 2.485
+    body_frame_y = 0.499
+    body_frame_z = 0.234
+    body_rot = [-0.0091, -0.0014, -0.9978, 0.0614] # qx qy qz qw
     pbrspot.utils.set_camera(180, -10, 2.5, [body_frame_x, body_frame_y, body_frame_z-0.74])
     # Create a rng with a seed so that executions stay
     # consistent between runs.
@@ -63,16 +64,19 @@ if __name__ == '__main__':
     other_pose = robot.arm.GetEETransform()
 
     # Slighly modify to generate a new pose
-    pose[0, 3] -= 0.5
-    print(f"Slightly-modified pose to move to: {pose}")
+    rel_pose = SE3Pose(0.3, 0.0, 0, Quat(1, 0, 0, 0))
+    curr_pose = SE3Pose.from_matrix(pose)
+    new_pose = curr_pose * rel_pose
+    new_pose_mat = new_pose.to_matrix()
+    print(f"Slightly-modified pose to move to: {pbrspot.geometry.pose_from_tform(new_pose_mat)}")
 
     # Visualize this new pose
     print("Visualizing modified pose!")
-    pbrspot.viz.draw_pose(pbrspot.geometry.pose_from_tform(pose), length=0.5, width=10)
+    pbrspot.viz.draw_pose(pbrspot.geometry.pose_from_tform(new_pose_mat), length=0.5, width=10)
     pbrspot.utils.wait_for_user()
 
     # Compute IK for this new pose
-    newq = robot.arm.ComputeIK(pose, rng)
+    newq = robot.arm.ComputeIK(new_pose_mat, rng)
     # Not that ComputeIK() returns None if the IK solver couldn't find a solution. 
     # So we'd always want to check if the solution was found before setting the configuration
     print("Moving to modified pose!")
@@ -83,6 +87,10 @@ if __name__ == '__main__':
     # newq_seed = robot.arm.ComputeIK(pose, rng, seed_q=q)
     # robot.arm.SetJointValues(newq_seed)
     pbrspot.utils.wait_for_user()
+    curr_body_pose = robot.get_body_transform()
+    curr_hand_pose = robot.arm.ComputeFK(newq)
+    print(f"Current robot body pose: {pbrspot.geometry.pose_from_tform(curr_body_pose)}")
+    print(f"Current robot hand pose: {pbrspot.geometry.pose_from_tform(curr_hand_pose)}")
 
     # By default the IK solver is using the current base pose. 
     # But we can compute the IK for a specific base pose. 
