@@ -62,12 +62,11 @@ class Spot(pbrspot.body.Body):
     def get_body_pose(self):
         '''Get the body pose of the robot
         @return 4x4 transform of the body in the world'''
-        world_pose = self.get_pose()
-        world_trans = world_pose[0]
+        world_pose_mat = self.get_transform()
         world2body_pose = self.get_relative_pose(self.all_links[1], self.all_links[0])
         world2body_mat = pbrspot.geometry.tform_from_pose(world2body_pose)
-        body_trans = world_trans + numpy.dot(world2body_mat[:3, :3], world2body_mat[:3, 3])
-        return (body_trans, world_pose[1])
+        body_pose_mat = world_pose_mat @ world2body_mat
+        return pbrspot.geometry.pose_from_tform(body_pose_mat)
     
     def get_body_transform(self):
         '''Get the body transform of the robot
@@ -75,11 +74,11 @@ class Spot(pbrspot.body.Body):
         return pbrspot.geometry.tform_from_pose(self.get_body_pose())
     
     def set_body_pose(self, body_pose):
-        (body_point, quat) = body_pose
         body2world_pose = self.get_relative_pose(self.all_links[0], self.all_links[1])
         body2world_mat = pbrspot.geometry.tform_from_pose(body2world_pose)
-        world_point = body_point + numpy.dot(body2world_mat[:3, :3], body2world_mat[:3, 3])
-        self.set_pose((world_point, quat))
+        body_pose_mat = pbrspot.geometry.tform_from_pose(body_pose)
+        world_pose_mat = body_pose_mat @ body2world_mat
+        self.set_pose(pbrspot.geometry.pose_from_tform(world_pose_mat))
 
     def set_body_transform(self, transform):
         self.set_body_pose(pbrspot.geometry.pose_from_tform(transform))
