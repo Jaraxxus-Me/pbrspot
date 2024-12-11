@@ -12,10 +12,10 @@ if __name__ == '__main__':
     pbrspot.utils.connect(use_gui=True)
     pbrspot.utils.disable_real_time()
     # update these information from ROS2 service localizer
-    body_frame_x = 2.485
-    body_frame_y = 0.499
+    body_frame_x = 2.465
+    body_frame_y = 0.508
     body_frame_z = 0.234
-    body_rot = [-0.0091, -0.0014, -0.9978, 0.0614] # qx qy qz qw
+    body_rot = [-0.002, -0.000, -0.9978, 0.0614] # qx qy qz qw
     pbrspot.utils.set_camera(180, -10, 2.5, [body_frame_x, body_frame_y, body_frame_z-0.74])
     # Create a rng with a seed so that executions stay
     # consistent between runs.
@@ -40,7 +40,7 @@ if __name__ == '__main__':
 
     # Visualize body pose
     body_pose = robot.get_body_transform()
-    print("Visualizing body pose! {}".format(pbrspot.geometry.pose_from_tform(body_pose)))
+    # print("Visualizing body pose! {}".format(pbrspot.geometry.pose_from_tform(body_pose)))
     pbrspot.viz.draw_pose(pbrspot.geometry.pose_from_tform(body_pose), length=0.4, width=5)
     # pbrspot.utils.wait_for_user()
 
